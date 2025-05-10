@@ -1,0 +1,46 @@
+{
+  "name": "opsctrl",
+  "version": "0.1.0",
+  "description": "<p align=\"center\">   <img src=\"assets/logo.png\" alt=\"OpsCtrl Logo\" width=\"250\" /> </p>",
+  "homepage": "https://github.com/Hillyon-Labs/opsctrl_cli#readme",
+  "bugs": {
+    "url": "https://github.com/Hillyon-Labs/opsctrl_cli/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hillyon-Labs/opsctrl_cli.git"
+  },
+  "bin": {
+    "opsctrl": "dist/index.js"
+  },
+  "license": "ISC",
+  "author": "Orchide Irakoze Sr.",
+  "type": "module",
+  "main": "commands.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "pkg": {
+    "scripts": "dist/index.js",
+    "targets": [
+      "node18-linux-x64",
+      "node18-macos-arm64",
+      "node18-win-x64"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.17",
+    "execa": "^9.5.3",
+    "pkg": "^5.8.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.3"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "ora": "^8.2.0"
+  }
+}

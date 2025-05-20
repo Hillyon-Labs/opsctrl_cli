@@ -1,5 +1,7 @@
 // utils/waitUntil.ts
 
+import { OpsctrlConfig } from '../core/config';
+
 /**
  * Polls until a condition returns a value or timeout is hit.
  * @param fn - async function to call repeatedly
@@ -11,14 +13,8 @@ export async function waitUntil<T>(
   fn: () => Promise<T>,
   timeout = 30000,
   interval = 2000,
-  onPoll?: () => void,
-  delayBeforeFirstAttempt = 0,
 ): Promise<T> {
   const start = Date.now();
-
-  if (delayBeforeFirstAttempt > 0) {
-    await new Promise((resolve) => setTimeout(resolve, delayBeforeFirstAttempt));
-  }
 
   while (Date.now() - start < timeout) {
     try {
@@ -27,10 +23,18 @@ export async function waitUntil<T>(
     } catch (err: any) {
       console.log(err);
     }
-
-    if (onPoll) onPoll();
-    await new Promise((resolve) => setTimeout(resolve, interval));
   }
 
   throw new Error(`Timeout after ${timeout}ms`);
+}
+
+// utils/delay.ts
+
+/**
+ * Delays execution for the given number of milliseconds.
+ * @param ms - Milliseconds to wait
+ * @returns Promise that resolves after delay
+ */
+export function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

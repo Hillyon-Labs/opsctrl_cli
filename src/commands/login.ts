@@ -4,14 +4,13 @@ import chalk from 'chalk';
 import { isLoggedIn, login } from '../core/auth';
 import axios from 'axios';
 import { DEFAULT_API_URL } from '../core/config';
+import { delay } from '../utils/utils';
 
 export function registerLoginCommand(program: Command) {
   program
     .command('login')
     .description('Authenticate with Opsctrl Cloud')
     .action(async () => {
-      console.log('[CLI INIT] Registering CLI commands...');
-
       try {
         if (isLoggedIn()) {
           const spinner = ora('Starting login flow...').start();
@@ -36,6 +35,10 @@ export function registerLoginCommand(program: Command) {
         const spinner = ora('Waiting for authentication...').start();
 
         spinner.text = 'Waiting for authentication...';
+
+        // this delay is to give the user time to open the link and paste the code
+        await delay(10000);
+
         await login(spinner, login_code);
         spinner.succeed('Logged in successfully.');
       } catch (err: any) {

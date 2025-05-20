@@ -6,14 +6,7 @@ import { waitUntil } from '../utils/utils';
 import ora, { Ora, Spinner } from 'ora';
 
 export async function login(spinner: Ora, login_code: string): Promise<OpsctrlConfig> {
-  const result = await waitUntil(
-    () => claimAuthToken(login_code),
-    30000,
-    10000,
-    () =>
-      (spinner.text = `Still waiting for authentication... (${new Date().toLocaleTimeString()})`),
-    7000,
-  );
+  const result = await waitUntil(() => claimAuthToken(login_code), 30000, 10000);
 
   if (!result) {
     spinner.fail('Login timed out. Please try again.');

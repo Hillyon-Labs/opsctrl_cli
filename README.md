@@ -2,11 +2,15 @@
   <img src="assets/logo.png" alt="OpsCtrl Logo" width="250" />
 </p>
 
+> 💥 Diagnose broken Kubernetes pods in seconds – from your terminal.
+
 # Opsctrl CLI
 
 Opsctrl is an open-source command-line tool that helps DevOps and platform engineers diagnose Kubernetes pod issues quickly and intelligently using logs, events, and LLM-powered suggestions.
 
 > This CLI is part of the **Opsctrl** platform. While the CLI is open source, the full SaaS backend offers incident memory, audit trails, Slack integrations, and team dashboards.
+
+⭐ If this looks useful, [star the repo](https://github.com/Hillyon-Labs/opsctrl_cli) to follow development and support the project!
 
 ---
 
@@ -17,6 +21,16 @@ Opsctrl is an open-source command-line tool that helps DevOps and platform engin
 * Automatically log incidents to the backend
 * CLI-authenticated using `opsctrl login`
 * Works with your existing Kube context
+
+---
+
+## 🧪 Current Status
+
+✔️ `opsctrl login` — working
+⚙️ `opsctrl diagnose` — launching soon
+🚧 `opsctrl fix` — coming in v0.2
+🧠 GPT-based suggestions — partially integrated
+📡 Slack support — planned
 
 ---
 
@@ -69,6 +83,19 @@ Preview or apply suggested fixes.
 * Tokens are stored securely in `~/.opsctrl/credentials.json`
 * Tokens are JWTs issued by Opsctrl backend
 * Automatically included in all CLI requests
+
+---
+
+## 🛣 Roadmap
+
+* [x] CLI install & login
+* [ ] Pod log/event parser
+* [ ] GPT-powered diagnosis
+* [ ] Redis-powered CLI agent
+* [ ] Slack integration
+* [ ] Web dashboard (read-only)
+
+Want to contribute to any of these? [Open an issue](https://github.com/Hillyon-Labs/opsctrl_cli/issues) or drop a PR 🙌
 
 ---
 

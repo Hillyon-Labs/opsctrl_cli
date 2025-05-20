@@ -89,9 +89,8 @@ Preview or apply suggested fixes.
 ## 🛣 Roadmap
 
 * [x] CLI install & login
-* [ ] Pod log/event parser
+* [x] Pod log/event parser
 * [ ] GPT-powered diagnosis
-* [ ] Redis-powered CLI agent
 * [ ] Slack integration
 * [ ] Web dashboard (read-only)
 

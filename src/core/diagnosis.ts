@@ -4,7 +4,15 @@ import k8s, { CoreV1Event } from '@kubernetes/client-node';
 import { PodStatus } from '../common/interface/podStatus';
 import { ContainerStatusSummary } from '../common/interface/containerStatus';
 import { parseContainerState } from '../utils/utils';
+import path from 'path';
+import fs from 'fs';
 import chalk from 'chalk';
+import {
+  LocalDiagnosisResult,
+  MatchLine,
+  PreliminaryCheckOutcome,
+  Rule,
+} from '../common/interface/rules';
 
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
@@ -29,7 +37,7 @@ export async function diagnosePod(
   podName: string,
   namespace: string,
   container?: string,
-): Promise<SanitizedPodDiagnostics> {
+): Promise<SanitizedPodDiagnostics | any> {
   const [status, events, logs] = await Promise.all([
     getPodStatus(podName, namespace),
     getPodEvents(podName, namespace),
@@ -37,6 +45,20 @@ export async function diagnosePod(
   ]);
 
   const sanitizedLogs = sanitizeLogs(logs);
+
+  const localMatch = runLocalDiagnosis(status.containerStates, events, sanitizedLogs);
+
+  if (localMatch) {
+    const outcome = handlePreliminaryDiagnostic(localMatch);
+
+    if (outcome.handled) {
+      console.log(`\n ${chalk.green(`Suggested Fix : ${outcome.result.suggested_fix}`)}`);
+    }
+
+    //TODO: not handled engage escalation process
+  }
+
+  //TODO: not handled engage escalation process
 
   return {
     podName,
@@ -49,28 +71,37 @@ export async function diagnosePod(
 }
 
 async function getPodStatus(podName: string, namespace: string): Promise<PodStatus> {
-  const pod: k8s.V1Pod = await coreV1.readNamespacedPod({
-    name: podName,
-    namespace,
-    pretty: 'true',
-  });
+  try {
+    const pod: k8s.V1Pod = await coreV1.readNamespacedPod({
+      name: podName,
+      namespace,
+      pretty: 'true',
+    });
 
-  const phase = pod.status?.phase || 'Unknown';
+    const phase = pod.status?.phase || 'Unknown';
 
-  const containerStates: ContainerStatusSummary[] = [];
+    const containerStates: ContainerStatusSummary[] = [];
 
-  const initContainers = pod.status?.initContainerStatuses || [];
-  const mainContainers = pod.status?.containerStatuses || [];
+    const initContainers = pod.status?.initContainerStatuses || [];
+    const mainContainers = pod.status?.containerStatuses || [];
 
-  initContainers.forEach((initContainer) => {
-    containerStates.push(parseContainerState(initContainer, 'init'));
-  });
+    initContainers.forEach((initContainer) => {
+      containerStates.push(parseContainerState(initContainer, 'init'));
+    });
 
-  mainContainers.forEach((mainContainer) => {
-    containerStates.push(parseContainerState(mainContainer, 'main'));
-  });
+    mainContainers.forEach((mainContainer) => {
+      containerStates.push(parseContainerState(mainContainer, 'main'));
+    });
 
-  return { phase, containerStates };
+    return { phase, containerStates };
+  } catch (error: any) {
+    const parsedError = JSON.parse(error?.body);
+    const message = parsedError?.message || 'Failed to fetch pod status';
+
+    console.log(chalk.red(`\n Error: ${message}`));
+
+    process.exit(1);
+  }
 }
 
 /**
@@ -96,8 +127,9 @@ export async function getPodEvents(podName: string, namespace: string): Promise<
 
     return filteredEvents.map((e) => e.message || '(no message)');
   } catch (err) {
-    console.error(`Error fetching events for pod ${podName}:`, err);
-    return ['Failed to fetch events'];
+    console.error(`\n ${chalk.red(`Error fetching events for pod ${podName}`)}`);
+
+    process.exit(1);
   }
 }
 
@@ -146,8 +178,8 @@ export async function getContainerLogs(
           .filter(Boolean)
           .map((line) => `[${container}] ${line}`);
       } catch (err) {
-        console.error(`Error fetching logs for container ${container}:`, err);
-        return [`[${container}] Failed to fetch logs`];
+        console.error(`\n ${chalk.red(`Error fetching logs for container ${container}`)}`);
+        process.exit(1);
       }
     }
 
@@ -166,8 +198,8 @@ export async function getContainerLogs(
         const parsedError = JSON.parse(err?.body);
         const message = parsedError?.message || 'Please specify a container name';
 
-        console.log(`[${type}:${name}] Failed to fetch logs`);
-        console.error('Error:', chalk.red(message));
+        console.log(`\n [${type}:${name}] Failed to fetch logs`);
+        console.error(`\n Error: ${chalk.red(message)}`);
 
         process.exit(1);
       }
@@ -175,10 +207,96 @@ export async function getContainerLogs(
 
     const logChunks = await Promise.all(logPromises);
     return logChunks.flat();
-  } catch (err) {
-    console.error(`Failed to get logs for pod ${podName}:`, err);
-    return ['Failed to fetch container logs'];
+  } catch (err: any) {
+    const parsedError = JSON.parse(err?.body);
+    const message = parsedError?.message || 'Failed to fetch logs';
+
+    console.error(chalk.red(`\n Error : ${message}`));
+    process.exit(1);
   }
+}
+
+export function runLocalDiagnosis(
+  containerStates: ContainerStatusSummary[],
+  events: string[],
+  logs: string[],
+): LocalDiagnosisResult | null {
+  const ruleFiles = loadAllRules(); // JSON objects from rules folder
+
+  const allHealthy =
+    containerStates.every(
+      (cs) => cs.state === 'Running' || cs.state.startsWith('Terminated: Completed'),
+    ) && events.length === 0;
+
+  if (allHealthy) {
+    console.log(chalk.green(`✅ Pod appears healthy. No issues detected.`));
+    process.exit(0);
+  }
+
+  for (const rule of ruleFiles) {
+    const matchingContainerState = rule.match.containerStates?.some((state: any) =>
+      containerStates.some((cs) => cs.state.includes(state)),
+    );
+
+    const matchLogs = rule.match.logs?.some((matcher: any) =>
+      logs.some((line) => matchLine(line, matcher)),
+    );
+
+    const matchEvents = rule.match.events?.some((matcher: any) =>
+      events.some((line) => matchLine(line, matcher)),
+    );
+
+    if (matchingContainerState || matchLogs || matchEvents) {
+      return {
+        ...rule.diagnosis,
+        matched: true,
+        ruleId: rule.id,
+      };
+    }
+  }
+
+  console.info(
+    chalk.yellow(
+      '\n INFO: Preliminary diagnostics found no matching errors escalation in progress.',
+    ),
+  );
+  return null;
+}
+
+function matchLine(line: string, matcher: MatchLine): boolean {
+  if (!line || !matcher) return false;
+
+  if (typeof matcher === 'string') {
+    return line.toLowerCase().includes(matcher.toLowerCase());
+  }
+
+  if (!matcher.value) return false;
+
+  try {
+    return matcher.type === 'regex'
+      ? new RegExp(matcher.value, 'i').test(line)
+      : line.toLowerCase().includes(matcher.value.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
+export function loadAllRules(): Rule[] {
+  const rulesPath = path.join(__dirname, '../common/rules/rules.json');
+  const data = fs.readFileSync(rulesPath, 'utf-8');
+  const rules = JSON.parse(data);
+
+  rules.forEach((rule: Rule, i: number) => {
+    if (!rule.id || !rule.diagnosis || typeof rule.diagnosis.diagnosis_summary !== 'string') {
+      console.warn(`Invalid rule format at index ${i}`);
+    }
+  });
+
+  if (!Array.isArray(rules)) {
+    console.warn('Expected rules.json to contain an array of rules.');
+  }
+
+  return rules;
 }
 
 export function sanitizeLogs(logLines: string[]): string[] {
@@ -196,4 +314,20 @@ export function sanitizeLogs(logLines: string[]): string[] {
       .replace(/\s{2,}/g, ' ') // collapse excessive spacing
       .trim(),
   );
+}
+
+export function handlePreliminaryDiagnostic(match: LocalDiagnosisResult): PreliminaryCheckOutcome {
+  const { confidence_score, diagnosis_summary } = match;
+
+  if (confidence_score >= 0.92) {
+    console.log(chalk.green(`\n ✅ Diagnosis locked: ${diagnosis_summary}`));
+    return { handled: true, result: match };
+  }
+
+  console.log(chalk.yellow(`\n ⚠️  Preliminary diagnosis: ${diagnosis_summary}`));
+  console.log(
+    chalk.gray(`\n 🔍We’re double-checking logs and cluster context to refine this result...`),
+  );
+
+  return { handled: false, reason: 'low-confidence', match };
 }

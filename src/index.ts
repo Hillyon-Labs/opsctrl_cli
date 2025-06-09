@@ -4,9 +4,8 @@ import updateNotifier from 'update-notifier';
 import pkg from '../package.json';
 import chalk from 'chalk';
 import { registerLoginCommand } from './commands/login';
-import { register } from 'module';
 import { registerDiagnoseCommand } from './commands/diagnose';
-
+import 'dotenv/config';
 const program = new Command();
 
 // Optional: check for updates

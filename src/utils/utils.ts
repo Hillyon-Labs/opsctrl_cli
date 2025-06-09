@@ -106,3 +106,8 @@ export function verboseLogDiagnosis(diagnosis: SanitizedPodDiagnostics) {
     diagnosis.recentLogs.slice(0, 15).forEach((line) => console.log(line));
   }
 }
+
+export function printErrorAndExit(message: string, exitCode = 1): never {
+  console.error(`\n ${chalk.red('❌ Error:')} ${message}`);
+  process.exit(exitCode);
+}

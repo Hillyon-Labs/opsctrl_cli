@@ -3,16 +3,19 @@ import { SanitizedPodDiagnostics } from '../common/interface/sanitizedPodDiagnos
 import k8s, { CoreV1Event } from '@kubernetes/client-node';
 import { PodStatus } from '../common/interface/podStatus';
 import { ContainerStatusSummary } from '../common/interface/containerStatus';
-import { parseContainerState } from '../utils/utils';
+import { parseContainerState, printErrorAndExit } from '../utils/utils';
 import path from 'path';
 import fs from 'fs';
 import chalk from 'chalk';
+import perfomance from 'perf_hooks';
+
 import {
   LocalDiagnosisResult,
   MatchLine,
   PreliminaryCheckOutcome,
   Rule,
 } from '../common/interface/rules';
+import { runFurtherDiagnosis } from './client';
 
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
@@ -38,6 +41,8 @@ export async function diagnosePod(
   namespace: string,
   container?: string,
 ): Promise<SanitizedPodDiagnostics | any> {
+  const start = performance.now();
+
   const [status, events, logs] = await Promise.all([
     getPodStatus(podName, namespace),
     getPodEvents(podName, namespace),
@@ -54,20 +59,24 @@ export async function diagnosePod(
     if (outcome.handled) {
       console.log(`\n ${chalk.green(`Suggested Fix : ${outcome.result.suggested_fix}`)}`);
     }
-
-    //TODO: not handled engage escalation process
   }
 
-  //TODO: not handled engage escalation process
-
-  return {
+  const response = await runFurtherDiagnosis({
     podName,
     namespace,
+    logs: sanitizedLogs,
+    events: events,
     phase: status.phase,
-    containerState: status.containerStates,
-    events,
-    recentLogs: sanitizedLogs,
-  };
+    containerState: status,
+  });
+
+  console.log(`\n✅ ${chalk.green(response)}`);
+
+  const end = performance.now();
+  const durationSeconds = ((end - start) / 1000).toFixed(1);
+  console.log(`\n⏱ Resolved in ${durationSeconds}s`);
+
+  process.exit(0);
 }
 
 async function getPodStatus(podName: string, namespace: string): Promise<PodStatus> {
@@ -96,11 +105,9 @@ async function getPodStatus(podName: string, namespace: string): Promise<PodStat
     return { phase, containerStates };
   } catch (error: any) {
     const parsedError = JSON.parse(error?.body);
-    const message = parsedError?.message || 'Failed to fetch pod status';
+    const message = parsedError?.message ?? 'Failed to fetch pod status';
 
-    console.log(chalk.red(`\n Error: ${message}`));
-
-    process.exit(1);
+    printErrorAndExit(message);
   }
 }
 
@@ -127,9 +134,11 @@ export async function getPodEvents(podName: string, namespace: string): Promise<
 
     return filteredEvents.map((e) => e.message || '(no message)');
   } catch (err) {
+    console.log(err);
+
     console.error(`\n ${chalk.red(`Error fetching events for pod ${podName}`)}`);
 
-    process.exit(1);
+    printErrorAndExit(`Error fetching events for pod ${podName}`);
   }
 }
 
@@ -178,8 +187,7 @@ export async function getContainerLogs(
           .filter(Boolean)
           .map((line) => `[${container}] ${line}`);
       } catch (err) {
-        console.error(`\n ${chalk.red(`Error fetching logs for container ${container}`)}`);
-        process.exit(1);
+        printErrorAndExit(`Error fetching logs for container ${container}`);
       }
     }
 
@@ -199,20 +207,17 @@ export async function getContainerLogs(
         const message = parsedError?.message || 'Please specify a container name';
 
         console.log(`\n [${type}:${name}] Failed to fetch logs`);
-        console.error(`\n Error: ${chalk.red(message)}`);
-
-        process.exit(1);
+        printErrorAndExit(`${chalk.red(message)}`);
       }
     });
 
     const logChunks = await Promise.all(logPromises);
     return logChunks.flat();
   } catch (err: any) {
-    const parsedError = JSON.parse(err?.body);
+    const parsedError = JSON.parse(err?.body) ?? null;
     const message = parsedError?.message || 'Failed to fetch logs';
 
-    console.error(chalk.red(`\n Error : ${message}`));
-    process.exit(1);
+    printErrorAndExit(message);
   }
 }
 

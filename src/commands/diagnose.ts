@@ -42,7 +42,7 @@ export function registerDiagnoseCommand(program: Command) {
           console.log(err);
 
           spinner.fail(`Failed to diagnose pod: ${(err as Error).message}`);
-          console.error(chalk.red(err.message || err));
+          console.error(chalk.red(err.message ?? err));
           process.exit(1);
         }
       },

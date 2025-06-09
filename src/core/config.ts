@@ -2,8 +2,11 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import 'dotenv/config';
+import chalk from 'chalk';
+import { CredentialsFile } from '../common/interface/client.interface';
+import { printErrorAndExit } from '../utils/utils';
 
-export const CONFIG_FILE = path.join(os.homedir(), '.opsctrl', 'credentials.json');
+export const CREDENTIALS_JSON_FILE = path.join(os.homedir(), '.opsctrl', 'credentials.json');
 export const DEFAULT_API_URL = process.env.OPSCTRL_API_URL;
 
 /**
@@ -20,27 +23,46 @@ export interface OpsctrlConfig {
  * Load config from ~/.opsctrl/credentials.json
  */
 export function loadConfig(): OpsctrlConfig {
-  if (!fs.existsSync(CONFIG_FILE)) {
-    throw new Error('You are not logged in. Run `opsctrl login` to authenticate.');
+  if (!fs.existsSync(CREDENTIALS_JSON_FILE)) {
+    console.log('You are not logged in. Run `opsctrl login` to authenticate.', 0);
   }
 
-  const raw = fs.readFileSync(CONFIG_FILE, 'utf-8');
+  const raw = fs.readFileSync(CREDENTIALS_JSON_FILE, 'utf-8');
   const config: OpsctrlConfig = JSON.parse(raw);
 
   if (!config.token || !config.user_id) {
-    throw new Error('Invalid credentials file. Please re-run `opsctrl login`.');
+    printErrorAndExit('Invalid credentials file. Please re-run `opsctrl login`.');
   }
 
   return config;
 }
 
-/**
- * Save token config to ~/.opsctrl/credentials.json
- */
 export function saveConfig(config: OpsctrlConfig) {
-  const dir = path.dirname(CONFIG_FILE);
+  const dir = path.dirname(CREDENTIALS_JSON_FILE);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+  fs.writeFileSync(CREDENTIALS_JSON_FILE, JSON.stringify(config, null, 2));
+}
+
+/**
+ *
+ * @returns the local auth token from ~/.opsctrl/credentials.json
+ */
+export function getLocalAuthToken(): string {
+  if (!fs.existsSync(CREDENTIALS_JSON_FILE)) {
+    console.error(chalk.red('Opsctrl is not authenticated. Run `opsctrl login` to authenticate.'));
+    process.exit(1);
+  }
+
+  const credentialsFile: CredentialsFile = JSON.parse(
+    fs.readFileSync(CREDENTIALS_JSON_FILE, 'utf-8'),
+  );
+
+  if (!credentialsFile.token) {
+    console.error(chalk.red('No token found in credentials file. Please re-run `opsctrl login`.'));
+    process.exit(1);
+  }
+
+  return credentialsFile.token;
 }
 
 /**

@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import { isLoggedIn, login } from '../core/auth';
 import axios from 'axios';
 import { DEFAULT_API_URL } from '../core/config';
-import { delay } from '../utils/utils';
+import { delay, printErrorAndExit } from '../utils/utils';
 
 export function registerLoginCommand(program: Command) {
   program
@@ -26,15 +26,15 @@ export function registerLoginCommand(program: Command) {
 
         const { login_code, url } = data;
 
-        console.log(`\n🔐 Open the link below in your browser to log in:`);
+        console.log(`\n 🔐 Open the link below in your browser to log in:`);
 
         console.log(chalk.cyanBright(url));
 
-        console.log(`\nPaste the code: ${chalk.bold(login_code)}\n`);
+        console.log(`\n Paste the code: ${chalk.bold(login_code)}\n`);
 
         const spinner = ora('Waiting for authentication...').start();
 
-        spinner.text = 'Waiting for authentication...';
+        spinner.text = '\n Waiting for authentication...';
 
         // this delay is to give the user time to open the link and paste the code
         await delay(10000);
@@ -47,8 +47,7 @@ export function registerLoginCommand(program: Command) {
         const spinner = ora('Waiting for authentication...').start();
 
         spinner.fail('Login failed.');
-        console.error(chalk.red(err.message || err));
-        process.exit(1);
+        printErrorAndExit(err.message || err);
       }
     });
 }

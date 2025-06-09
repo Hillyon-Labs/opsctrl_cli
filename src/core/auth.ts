@@ -2,15 +2,15 @@
 import axios from 'axios';
 import chalk from 'chalk';
 import { DEFAULT_API_URL, saveConfig, loadConfig, isTokenExpired, OpsctrlConfig } from './config';
-import { waitUntil } from '../utils/utils';
-import ora, { Ora, Spinner } from 'ora';
+import { printErrorAndExit, waitUntil } from '../utils/utils';
+import { Ora } from 'ora';
 
 export async function login(spinner: Ora, login_code: string): Promise<OpsctrlConfig> {
   const result = await waitUntil(() => claimAuthToken(login_code), 30000, 10000);
 
   if (!result) {
     spinner.fail('Login timed out. Please try again.');
-    throw new Error('Login timed out. Please try again.');
+    printErrorAndExit('Login timed out. Please try again.');
   }
 
   saveConfig(result);
@@ -37,6 +37,6 @@ export async function claimAuthToken(login_code: string): Promise<OpsctrlConfig>
   } catch (err: any) {
     console.log(err);
 
-    throw new Error(err);
+    printErrorAndExit(err);
   }
 }

@@ -37,7 +37,7 @@ export function registerLoginCommand(program: Command) {
         spinner.text = '\n Waiting for authentication...';
 
         // this delay is to give the user time to open the link and paste the code
-        await delay(10000);
+        await delay(30000);
 
         await login(spinner, login_code);
         spinner.succeed('Logged in successfully.');

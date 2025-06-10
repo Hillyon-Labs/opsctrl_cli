@@ -2,7 +2,6 @@ import k8s from '@kubernetes/client-node';
 import { printErrorAndExit } from '../utils/utils';
 import chalk from 'chalk';
 
-let kc: k8s.KubeConfig;
 let coreV1: k8s.CoreV1Api;
 
 export function initKube(context?: string) {

@@ -16,12 +16,7 @@ import {
   Rule,
 } from '../common/interface/rules';
 import { runFurtherDiagnosis } from './client';
-
-const kc = new k8s.KubeConfig();
-kc.loadFromDefault();
-
-const coreV1 = kc.makeApiClient(k8s.CoreV1Api);
-const log = new k8s.Log(kc);
+import { getCoreV1 } from './kube';
 
 /**
  * Diagnoses the specified Kubernetes pod by collecting its status, recent events, and container logs.
@@ -80,6 +75,8 @@ export async function diagnosePod(
 }
 
 async function getPodStatus(podName: string, namespace: string): Promise<PodStatus> {
+  const coreV1 = getCoreV1();
+
   try {
     const pod: k8s.V1Pod = await coreV1.readNamespacedPod({
       name: podName,
@@ -118,6 +115,8 @@ async function getPodStatus(podName: string, namespace: string): Promise<PodStat
  * @returns A promise that resolves to an array of event messages related to the pod.
  */
 export async function getPodEvents(podName: string, namespace: string): Promise<string[]> {
+  const coreV1 = getCoreV1();
+
   try {
     const res = await coreV1.listNamespacedEvent({ namespace, limit: 10, timeoutSeconds: 10 });
 
@@ -157,9 +156,8 @@ export async function getContainerLogs(
   container?: string,
   tailLines = 200,
 ): Promise<string[]> {
+  const coreV1 = getCoreV1();
   try {
-    const coreV1 = kc.makeApiClient(k8s.CoreV1Api);
-
     // Fetch pod so we can list all containers
     const pod = await coreV1.readNamespacedPod({ name: podName, namespace });
     const allContainers = [

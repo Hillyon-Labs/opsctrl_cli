@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import k8s from '@kubernetes/client-node';
 import { diagnosePod } from '../core/diagnosis';
 import { verboseLogDiagnosis } from '../utils/utils';
+import { initKube } from '../core/kube';
 
 export function registerDiagnoseCommand(program: Command) {
   program
@@ -24,12 +25,7 @@ export function registerDiagnoseCommand(program: Command) {
         const spinner = ora(`Diagnosing pod ${podName} in namespace ${namespace}...`).start();
 
         try {
-          const kc = new k8s.KubeConfig();
-          kc.loadFromDefault();
-
-          if (context) {
-            kc.setCurrentContext(context);
-          }
+          initKube(context);
 
           // Future improvement: pass `kc` to diagnosis helpers for context-aware support
 

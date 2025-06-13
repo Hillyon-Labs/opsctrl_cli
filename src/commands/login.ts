@@ -43,7 +43,7 @@ export function registerLoginCommand(program: Command) {
           );
         }
 
-        printErrorAndExit('\n Failed to initiate login. Please try again.', 0);
+        printErrorAndExit('\n Failed to initiate login. Please try again.');
       }
     });
 }

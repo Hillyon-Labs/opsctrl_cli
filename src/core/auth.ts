@@ -6,11 +6,11 @@ import { printErrorAndExit, waitUntil } from '../utils/utils';
 import { Ora } from 'ora';
 
 export async function login(spinner: Ora, login_code: string): Promise<OpsctrlConfig> {
-  const result = await waitUntil(() => claimAuthToken(login_code), 30000, 10000);
+  const result = await waitUntil(() => claimAuthToken(login_code), 30000, 2000);
 
   if (!result) {
-    spinner.fail('Login timed out. Please try again.');
-    printErrorAndExit('Login timed out. Please try again.');
+    spinner.fail('\n Login timed out. Please try again.');
+    printErrorAndExit('\n Login timed out. Please try again.', 0);
   }
 
   saveConfig(result);
@@ -35,8 +35,8 @@ export async function claimAuthToken(login_code: string): Promise<OpsctrlConfig>
 
     return response.data;
   } catch (err: any) {
-    console.log(err);
-
-    printErrorAndExit(err);
+    printErrorAndExit(
+      '\n Failed to claim auth token. Please check your network connection and try again.',
+    );
   }
 }

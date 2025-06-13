@@ -43,6 +43,15 @@ export function saveConfig(config: OpsctrlConfig) {
   fs.writeFileSync(CREDENTIALS_JSON_FILE, JSON.stringify(config, null, 2));
 }
 
+export async function invalidateToken(): Promise<void> {
+  if (fs.existsSync(CREDENTIALS_JSON_FILE)) {
+    fs.unlinkSync(CREDENTIALS_JSON_FILE);
+    console.log(chalk.green('🔒 Logged out successfully. Token removed.'));
+  } else {
+    console.log(chalk.yellow('⚠️ No active session found.'));
+  }
+}
+
 /**
  *
  * @returns the local auth token from ~/.opsctrl/credentials.json

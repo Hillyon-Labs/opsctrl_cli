@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import { registerLoginCommand } from './commands/login';
 import { registerDiagnoseCommand } from './commands/diagnose';
 import 'dotenv/config';
+import { registerLogoutCommand } from './commands/logout';
 const program = new Command();
 
 // Optional: check for updates
@@ -14,6 +15,7 @@ program.showHelpAfterError();
 
 registerLoginCommand(program);
 registerDiagnoseCommand(program);
+registerLogoutCommand(program);
 
 async function main() {
   try {

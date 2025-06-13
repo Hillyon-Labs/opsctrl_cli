@@ -185,7 +185,7 @@ export async function getContainerLogs(
           .filter(Boolean)
           .map((line) => `[${container}] ${line}`);
       } catch (err) {
-        printErrorAndExit(`Error fetching logs for container ${container}`);
+        printErrorAndExit(`Couldn't fetch logs ${container}`, 0);
       }
     }
 
@@ -204,7 +204,6 @@ export async function getContainerLogs(
         const parsedError = JSON.parse(err?.body);
         const message = parsedError?.message || 'Please specify a container name';
 
-        console.log(`\n [${type}:${name}] Failed to fetch logs`);
         printErrorAndExit(`${chalk.red(message)}`);
       }
     });

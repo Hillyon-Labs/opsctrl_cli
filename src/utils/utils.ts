@@ -6,29 +6,23 @@ import { V1ContainerStatus } from '@kubernetes/client-node';
 import chalk from 'chalk';
 
 /**
- * Polls until a condition returns a value or timeout is hit.
- * @param fn - async function to call repeatedly
- * @param timeout - max time in ms before giving up (default 30s)
- * @param interval - how often to call fn (ms, default 2s)
- * @param onPoll - optional callback called each cycle (e.g. for spinner)
+ * Repeatedly invokes `fn()` until it returns a truthy value or the timeout elapses.
+ * @param fn        async function that returns a token or falsy
+ * @param timeoutMs total time to keep trying (in ms)
+ * @param intervalMs pause between attempts (in ms)
  */
 export async function waitUntil<T>(
-  fn: () => Promise<T>,
-  timeout = 30000,
-  interval = 2000,
-): Promise<T> {
-  const start = Date.now();
-
-  while (Date.now() - start < timeout) {
-    try {
-      const result = await fn();
-      if (result !== undefined) return result;
-    } catch (err: any) {
-      console.log(err);
-    }
-  }
-
-  throw new Error(`Timeout after ${timeout}ms`);
+  fn: () => Promise<T | undefined>,
+  timeoutMs: number,
+  intervalMs: number,
+): Promise<T | undefined> {
+  const deadline = Date.now() + timeoutMs;
+  do {
+    const result = await fn();
+    if (result) return result;
+    await new Promise((r) => setTimeout(r, intervalMs));
+  } while (Date.now() < deadline);
+  return undefined;
 }
 
 /**

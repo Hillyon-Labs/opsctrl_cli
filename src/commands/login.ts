@@ -15,9 +15,7 @@ export function registerLoginCommand(program: Command) {
         if (isLoggedIn()) {
           const spinner = ora('Starting login flow...').start();
 
-          spinner.warn(
-            'Already logged in. If you want to re-authenticate, delete ~/.opsctrl/credentials.json.',
-          );
+          spinner.warn('There is an active session. You can log out using `opsctrl logout`.');
 
           process.exit(0);
         }
@@ -36,18 +34,16 @@ export function registerLoginCommand(program: Command) {
 
         spinner.text = '\n Waiting for authentication...';
 
-        // this delay is to give the user time to open the link and paste the code
-        await delay(30000);
-
         await login(spinner, login_code);
         spinner.succeed('Logged in successfully.');
       } catch (err: any) {
-        console.log(err);
+        if (err.cause.code === 'ECONNREFUSED') {
+          printErrorAndExit(
+            'Could not connect to the authentication server. Please check your network connection.',
+          );
+        }
 
-        const spinner = ora('Waiting for authentication...').start();
-
-        spinner.fail('Login failed.');
-        printErrorAndExit(err.message || err);
+        printErrorAndExit('\n Failed to initiate login. Please try again.', 0);
       }
     });
 }

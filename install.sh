@@ -19,12 +19,14 @@ detect_platform() {
 
   case "$OS" in
     darwin) OS="macos" ;;
-    linux|windows) ;;
+    linux)  OS="linux" ;;
+    msys*|mingw*|cygwin*) OS="win" ;;  # For Git Bash / Windows support
     *) echo "Unsupported OS: $OS"; exit 1 ;;
   esac
 
   echo "${OS}-${ARCH}"
 }
+
 
 
 # Download correct binary from GitHub

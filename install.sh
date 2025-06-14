@@ -17,8 +17,15 @@ detect_platform() {
     *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
   esac
 
+  case "$OS" in
+    darwin) OS="macos" ;;
+    linux|windows) ;;
+    *) echo "Unsupported OS: $OS"; exit 1 ;;
+  esac
+
   echo "${OS}-${ARCH}"
 }
+
 
 # Download correct binary from GitHub
 download_binary() {

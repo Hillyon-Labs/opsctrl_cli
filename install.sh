@@ -32,12 +32,13 @@ detect_platform() {
 # Download correct binary from GitHub
 download_binary() {
   VERSION="${1:-latest}"
+  TAG="${VERSION#v}"
   PLATFORM=$(detect_platform)
 
   if [ "$VERSION" == "latest" ]; then
     URL="https://github.com/$REPO/releases/latest/download/${CMD_NAME}-${PLATFORM}"
   else
-    URL="https://github.com/$REPO/releases/download/${VERSION}/${CMD_NAME}-${PLATFORM}"
+    URL="https://github.com/$REPO/releases/download/${TAG}/${CMD_NAME}-${PLATFORM}"
   fi
 
   DEST="$INSTALL_DIR/$CMD_NAME"

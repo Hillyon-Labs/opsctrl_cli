@@ -24,7 +24,7 @@ export interface OpsctrlConfig {
  */
 export function loadConfig(): OpsctrlConfig {
   if (!fs.existsSync(CREDENTIALS_JSON_FILE)) {
-    console.log('You are not logged in. Run `opsctrl login` to authenticate.', 0);
+    console.log('You are not logged in. Run `opsctrl login` to authenticate.');
   }
 
   const raw = fs.readFileSync(CREDENTIALS_JSON_FILE, 'utf-8');

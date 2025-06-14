@@ -50,6 +50,6 @@
     "ora": "^8.2.0",
     "perf_hooks": "^0.0.1",
     "tar-fs": "^3.0.9",
-    "update-notifier": "^7.3.1"
+    "update-notifier-cjs": "^5.1.7"
   }
 }

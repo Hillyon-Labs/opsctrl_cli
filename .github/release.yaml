@@ -49,15 +49,21 @@ jobs:
       - name: Bundle with ncc
         run: npx @vercel/ncc build src/index.ts -o dist
 
-      - name: Build native binary
-        env:
-          NEXE_CACHE_DIR: ~/.cache/nexe
+      - name: Build native binary (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
         run: |
           mkdir -p release_dist
-          npx nexe dist/index.js \
-            --target ${{ matrix.target }} \
-            --output release_dist/${{ matrix.output }} \
-            --build
+          npx nexe dist/index.js --target ${{ matrix.target }} --output release_dist/${{ matrix.output }} --build
+
+      - name: Build native binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          NEXE_CACHE_DIR: $env:USERPROFILE/.cache/nexe
+        run: |
+          New-Item -ItemType Directory -Path release_dist -Force
+          npx nexe dist/index.js --target ${{ matrix.target }} --output release_dist/${{ matrix.output }} --build
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v3

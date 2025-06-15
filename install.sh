@@ -6,52 +6,49 @@ REPO="Hillyon-Labs/opsctrl_cli"
 CMD_NAME="opsctrl"
 INSTALL_DIR="/usr/local/bin"
 
-# Detect OS and Architecture
 detect_platform() {
   OS=$(uname | tr '[:upper:]' '[:lower:]')
   ARCH=$(uname -m)
 
   case "$ARCH" in
     x86_64) ARCH="x64" ;;
-    arm64|aarch64) ARCH="arm64" ;;
-    *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
+    arm64|aarch64|armv8) ARCH="arm64" ;;
+    *) echo "❌ Unsupported architecture: $ARCH"; exit 1 ;;
   esac
 
   case "$OS" in
     darwin) OS="macos" ;;
     linux)  OS="linux" ;;
-    msys*|mingw*|cygwin*) OS="win" ;;  # For Git Bash / Windows support
-    *) echo "Unsupported OS: $OS"; exit 1 ;;
+    mingw*|msys*|cygwin*|MINGW*|MSYS*|CYGWIN*) OS="win" ;;
+    *) echo "❌ Unsupported OS: $OS"; exit 1 ;;
   esac
 
   echo "${OS}-${ARCH}"
 }
 
-
-
-# Download correct binary from GitHub
 download_binary() {
   INPUT="${1:-latest}"
-  VERSION="${INPUT#v}"  # Strips 'v' if present
+  VERSION="${INPUT#v}"
   PLATFORM=$(detect_platform)
+  EXT=""
+  [ "$OS" = "win" ] && EXT=".exe"
 
   if [ "$INPUT" == "latest" ]; then
-    URL="https://github.com/$REPO/releases/latest/download/${CMD_NAME}-${PLATFORM}"
+    URL="https://github.com/$REPO/releases/latest/download/${CMD_NAME}-${PLATFORM}${EXT}"
   else
-    URL="https://github.com/$REPO/releases/download/${VERSION}/${CMD_NAME}-${PLATFORM}"
+    URL="https://github.com/$REPO/releases/download/${VERSION}/${CMD_NAME}-${PLATFORM}${EXT}"
   fi
 
-  DEST="$INSTALL_DIR/$CMD_NAME"
+  DEST="$INSTALL_DIR/$CMD_NAME$EXT"
+  echo "⬇️  Downloading $URL to $DEST..."
 
-  echo "Downloading $URL..."
   sudo curl -L --fail "$URL" -o "$DEST"
   sudo chmod +x "$DEST"
 }
 
-# Post-install check
 verify_installation() {
-  echo "$CMD_NAME installed at $(command -v $CMD_NAME)"
-  $CMD_NAME --version || echo "Installation succeeded, but version check failed."
+  echo "✅ $CMD_NAME installed at: $(command -v $CMD_NAME || echo 'not found')"
+  $CMD_NAME --version || echo "⚠️  Version check failed — binary may not be compatible."
 }
 
 main() {

@@ -20,10 +20,10 @@ const BUNDLE_PATH = 'dist/opsctrl.cjs';
 const VERSION = require('./package.json').version;
 
 const targets = [
-  { platform: 'linux', arch: 'x64', node: 'node18', ext: '' },
-  { platform: 'macos', arch: 'x64', node: 'node18', ext: '' },
-  { platform: 'macos', arch: 'arm64', node: 'node18', ext: '' },
-  { platform: 'win', arch: 'x64', node: 'node18', ext: '.exe' },
+  { platform: 'linux', arch: 'x64', node: 'node20.14.0', ext: '' },
+  { platform: 'macos', arch: 'x64', node: 'node20.14.0', ext: '' },
+  { platform: 'macos', arch: 'arm64', node: 'node20.14.0', ext: '' },
+  { platform: 'win', arch: 'x64', node: 'node20.14.0', ext: '.exe' },
 ];
 
 async function bundle() {
@@ -58,12 +58,15 @@ async function buildBinaries() {
 
   for (const target of targets) {
     const binaryName = `${CMD_NAME}-${target.platform}-${target.arch}${target.ext}`;
-    const binaryPath = join(DIST_DIR, binaryName);
     const zipPath = join(DIST_DIR, `${CMD_NAME}-${target.platform}-${target.arch}.zip`);
 
-    console.log(`🔧 Building binary: ${binaryName}`);
-    await $`pkg ${BUNDLE_PATH} --targets ${target.node}-${target.platform}-${target.arch} --output ${binaryPath}`;
+    const nexeTarget = `${target.platform}-${target.arch}-${target.node}`;
+    const binaryPath = `release_dist/opsctrl-${target.platform}-${target.arch}${target.ext}`;
 
+    console.log(`🔧 Building binary: ${binaryName}`);
+    await $`npx nexe dist/opsctrl.cjs \
+    --target ${nexeTarget} \
+    --output ${binaryPath}`;
     console.log(`📦 Zipping to ${zipPath}`);
     await zipBinary(binaryPath, zipPath);
   }

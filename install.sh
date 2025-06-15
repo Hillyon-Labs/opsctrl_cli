@@ -45,13 +45,12 @@ download_and_install() {
   echo "📦 Unzipping..."
   unzip -q "$TMP_DIR/$ZIP_NAME" -d "$TMP_DIR"
 
-  # Correctly find expected binary
-  BINARY_NAME="${CMD_NAME}-${PLATFORM}"
-  BINARY_PATH="$TMP_DIR/$BINARY_NAME"
+  # Try to find a file that matches opsctrl-* or just opsctrl
+  BINARY_PATH=$(find "$TMP_DIR" -type f -name "${CMD_NAME}*" | head -n 1)
 
   if [ ! -f "$BINARY_PATH" ]; then
-    echo "❌ Could not find expected binary: $BINARY_NAME"
-    ls -l "$TMP_DIR"  # helpful debug
+    echo "❌ Could not find a binary inside the zip archive."
+    ls -l "$TMP_DIR"
     exit 1
   fi
 

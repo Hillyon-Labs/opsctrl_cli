@@ -61,7 +61,7 @@ jobs:
             --build
 
       - name: Upload binary artifact
-        uses: actions/upload-artifact@v3
+        uses: uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.output }}
           path: release_dist/${{ matrix.output }}

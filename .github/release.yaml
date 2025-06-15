@@ -27,7 +27,7 @@ jobs:
             output: opsctrl-windows-x64.exe
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js ${{ matrix.node-version }}

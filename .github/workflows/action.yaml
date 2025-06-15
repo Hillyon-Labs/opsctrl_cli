@@ -1,7 +1,7 @@
 name: Build & Package Opsctrl CLI
 
 on:
-  workflow_dispatch:          # ← enables “Run workflow” button
+  workflow_dispatch:
   push:
     branches: [main, master]
   pull_request:
@@ -61,7 +61,7 @@ jobs:
             --build
 
       - name: Upload binary artifact
-        uses: uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.output }}
           path: release_dist/${{ matrix.output }}

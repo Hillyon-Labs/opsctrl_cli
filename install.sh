@@ -45,11 +45,18 @@ download_and_install() {
   echo "📦 Unzipping..."
   unzip -q "$TMP_DIR/$ZIP_NAME" -d "$TMP_DIR"
 
-  BINARY_PATH=$(find "$TMP_DIR" -type f -name "$CMD_NAME*" | head -n 1)
+  # Correctly find expected binary
+  BINARY_NAME="${CMD_NAME}-${PLATFORM}"
+  BINARY_PATH="$TMP_DIR/$BINARY_NAME"
+
   if [ ! -f "$BINARY_PATH" ]; then
-    echo "❌ Could not find binary in the zip"
+    echo "❌ Could not find expected binary: $BINARY_NAME"
+    ls -l "$TMP_DIR"  # helpful debug
     exit 1
   fi
+
+  echo "🔍 Binary info:"
+  file "$BINARY_PATH"
 
   chmod +x "$BINARY_PATH"
   sudo mv "$BINARY_PATH" "$INSTALL_DIR/$CMD_NAME"

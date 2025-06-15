@@ -1,4 +1,4 @@
-import k8s from '@kubernetes/client-node';
+import * as k8s from '@kubernetes/client-node';
 import { printErrorAndExit } from '../utils/utils';
 import chalk from 'chalk';
 

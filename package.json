@@ -11,28 +11,38 @@
     "url": "git+https://github.com/Hillyon-Labs/opsctrl_cli.git"
   },
   "bin": {
-    "opsctrl": "dist/index.js"
+    "opsctrl": "dist/opsctrl.cjs"
   },
+  "main": "dist/opsctrl.cjs",
+  "type": "commonjs",
   "license": "ISC",
   "author": "Orchide Irakoze Sr.",
-  "type": "commonjs",
-  "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
+    "bundle": "tsx build-cli.ts",
+    "pkg": "pkg . --out-path dist",
+    "zip": "tsx zip-binaries.ts",
     "dev": "ts-node src/index.ts"
   },
   "pkg": {
-    "scripts": "dist/index.js",
+    "scripts": [
+      "dist/opsctrl.cjs"
+    ],
+    "assets": [
+      "assets/**/*"
+    ],
     "targets": [
       "node18-linux-x64",
+      "node18-macos-x64",
       "node18-macos-arm64",
       "node18-win-x64"
-    ]
+    ],
+    "outputPath": "dist"
   },
   "devDependencies": {
     "@types/node": "^22.15.17",
     "@types/update-notifier": "^6.0.8",
+    "esbuild": "^0.25.5",
     "execa": "^9.5.3",
     "pkg": "^5.8.1",
     "ts-node": "^10.9.2",

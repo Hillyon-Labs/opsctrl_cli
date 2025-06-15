@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 const updateNotifier = require('update-notifier-cjs');
-import pkg from '../package.json';
 import chalk from 'chalk';
 import { registerLoginCommand } from './commands/login';
 import { registerDiagnoseCommand } from './commands/diagnose';
@@ -10,7 +9,6 @@ import { registerLogoutCommand } from './commands/logout';
 const program = new Command();
 
 // Optional: check for updates
-updateNotifier({ pkg }).notify();
 program.showHelpAfterError();
 
 registerLoginCommand(program);

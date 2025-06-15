@@ -26,33 +26,43 @@ detect_platform() {
   echo "${OS}-${ARCH}"
 }
 
-download_binary() {
+download_and_install() {
   INPUT="${1:-latest}"
   VERSION="${INPUT#v}"
   PLATFORM=$(detect_platform)
-  EXT=""
-  [ "$OS" = "win" ] && EXT=".exe"
+  ZIP_NAME="${CMD_NAME}-${PLATFORM}.zip"
+  TMP_DIR=$(mktemp -d)
 
   if [ "$INPUT" == "latest" ]; then
-    URL="https://github.com/$REPO/releases/latest/download/${CMD_NAME}-${PLATFORM}${EXT}"
+    URL="https://github.com/$REPO/releases/latest/download/$ZIP_NAME"
   else
-    URL="https://github.com/$REPO/releases/download/${VERSION}/${CMD_NAME}-${PLATFORM}${EXT}"
+    URL="https://github.com/$REPO/releases/download/v$VERSION/$ZIP_NAME"
   fi
 
-  DEST="$INSTALL_DIR/$CMD_NAME$EXT"
-  echo "⬇️  Downloading $URL to $DEST..."
+  echo "⬇️  Downloading $URL..."
+  curl -L --fail "$URL" -o "$TMP_DIR/$ZIP_NAME"
 
-  sudo curl -L --fail "$URL" -o "$DEST"
-  sudo chmod +x "$DEST"
+  echo "📦 Unzipping..."
+  unzip -q "$TMP_DIR/$ZIP_NAME" -d "$TMP_DIR"
+
+  BINARY_PATH=$(find "$TMP_DIR" -type f -name "$CMD_NAME*" | head -n 1)
+  if [ ! -f "$BINARY_PATH" ]; then
+    echo "❌ Could not find binary in the zip"
+    exit 1
+  fi
+
+  chmod +x "$BINARY_PATH"
+  sudo mv "$BINARY_PATH" "$INSTALL_DIR/$CMD_NAME"
+  rm -rf "$TMP_DIR"
 }
 
 verify_installation() {
   echo "✅ $CMD_NAME installed at: $(command -v $CMD_NAME || echo 'not found')"
-  $CMD_NAME --version || echo "⚠️  Version check failed — binary may not be compatible."
+  $CMD_NAME --version || echo "⚠️  Installed, but failed to run."
 }
 
 main() {
-  download_binary "$1"
+  download_and_install "$1"
   verify_installation
 }
 

@@ -45,11 +45,11 @@ download_and_install() {
   echo "📦 Unzipping..."
   unzip -q "$TMP_DIR/$ZIP_NAME" -d "$TMP_DIR"
 
-  # Try to find a file that matches opsctrl-* or just opsctrl
-  BINARY_PATH=$(find "$TMP_DIR" -type f -name "${CMD_NAME}*" | head -n 1)
+  # Match only actual executable files, not .zip etc
+  BINARY_PATH=$(find "$TMP_DIR" -type f -perm +111 -name "${CMD_NAME}*" | head -n 1)
 
   if [ ! -f "$BINARY_PATH" ]; then
-    echo "❌ Could not find a binary inside the zip archive."
+    echo "❌ Could not find an executable binary inside the zip archive."
     ls -l "$TMP_DIR"
     exit 1
   fi
@@ -57,6 +57,7 @@ download_and_install() {
   echo "🔍 Binary info:"
   file "$BINARY_PATH"
 
+  echo "📦 Installing to $INSTALL_DIR/$CMD_NAME"
   chmod +x "$BINARY_PATH"
   sudo mv "$BINARY_PATH" "$INSTALL_DIR/$CMD_NAME"
   rm -rf "$TMP_DIR"

@@ -64,7 +64,7 @@ download_and_install() {
 
 verify_installation() {
   echo "✅ $CMD_NAME installed at: $(command -v $CMD_NAME || echo 'not found')"
-  $CMD_NAME --version || echo "⚠️  Installed, but failed to run."
+  $CMD_NAME --help || echo "⚠️  Installed, but failed to run."
 }
 
 main() {

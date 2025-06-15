@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-const updateNotifier = require('update-notifier-cjs');
 import chalk from 'chalk';
 import { registerLoginCommand } from './commands/login';
 import { registerDiagnoseCommand } from './commands/diagnose';

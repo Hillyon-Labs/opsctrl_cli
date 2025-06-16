@@ -76,6 +76,9 @@ jobs:
       - name: 📥 Install Dependencies
         run: npm ci
 
+      - name: Install tsx
+        run: npm install -g tsx
+
       - name: ⚡ Build native CLI for host OS
         run: |
           npm install

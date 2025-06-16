@@ -40,6 +40,8 @@ function detectTarget() {
 }
 
 const defineEnv = Object.entries(process.env).reduce((acc, [key, val]) => {
+  // Skip env vars with invalid JS identifier characters so they don't break the build in windows
+  if (!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)) return acc;
   acc[`process.env.${key}`] = JSON.stringify(val);
   return acc;
 }, {} as Record<string, string>);

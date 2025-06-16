@@ -19,12 +19,7 @@ const DIST_DIR = 'release_dist';
 const BUNDLE_PATH = 'dist/opsctrl.cjs';
 const VERSION = require('./package.json').version;
 
-const targets = [
-  { platform: 'linux', arch: 'x64', node: 'node20.14.0', ext: '' },
-  { platform: 'macos', arch: 'x64', node: 'node20.14.0', ext: '' },
-  { platform: 'macos', arch: 'arm64', node: 'node20.14.0', ext: '' },
-  { platform: 'win', arch: 'x64', node: 'node20.14.0', ext: '.exe' },
-];
+const targets = [{ platform: 'macos', arch: 'arm64', node: 'node20.14.0', ext: '' }];
 
 async function bundle() {
   await build({
@@ -66,6 +61,7 @@ async function buildBinaries() {
     console.log(`🔧 Building binary: ${binaryName}`);
     await $`npx nexe dist/opsctrl.cjs \
     --target ${nexeTarget} \
+    --build \
     --output ${binaryPath}`;
     console.log(`📦 Zipping to ${zipPath}`);
     await zipBinary(binaryPath, zipPath);

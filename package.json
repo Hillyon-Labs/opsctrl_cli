@@ -19,11 +19,11 @@
   "author": "Orchide Irakoze Sr.",
   "scripts": {
     "build": "tsc",
-    "bundle": "tsx build-cli.ts",
     "pkg": "pkg . --out-path dist",
     "zip": "tsx zip-binaries.ts",
     "dev": "ts-node src/index.ts",
-    "release": "npx tsx release.ts"
+    "clean": "rm -rf dist release_dist",
+    "release": "npm run clean && tsx build-cli.ts"
   },
   "pkg": {
     "scripts": [

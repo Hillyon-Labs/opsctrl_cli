@@ -35,7 +35,19 @@ jobs:
       - name: 📦 Checkout Code
         uses: actions/checkout@v4
 
-      - name: ⚙️ Validate Tag Exists
+      - name: ⚙️ Validate Tag Exists (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tag = "${{ github.event.inputs.tag }}"
+          $exists = git tag -l $tag | Select-String $tag
+          if (-not $exists) {
+            Write-Host "❌ Tag $tag does not exist!"
+            exit 1
+          }
+
+      - name: ⚙️ Validate Tag Exists (Unix)
+        if: runner.os != 'Windows'
         run: |
           if ! git rev-parse "refs/tags/${{ github.event.inputs.tag }}" >/dev/null 2>&1; then
             echo "❌ Tag ${{ github.event.inputs.tag }} does not exist!"

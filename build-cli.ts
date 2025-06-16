@@ -1,13 +1,43 @@
-// bundle-cli.ts
+// scripts/build-cli.ts
 import { build } from 'esbuild';
 import dotenv from 'dotenv';
-import { $ } from 'execa';
 import { mkdir, rm } from 'fs/promises';
 import { join } from 'path';
+import { $ } from 'execa';
 import archiver from 'archiver';
 import { createWriteStream } from 'fs';
 
 dotenv.config();
+
+// Map Node.js `process.platform` and `process.arch` to nexe-compatible labels
+function detectTarget() {
+  const platformMap: Record<string, string> = {
+    win32: 'windows',
+    darwin: 'macos',
+    linux: 'linux',
+  };
+
+  const archMap: Record<string, string> = {
+    x64: 'x64',
+    arm64: 'arm64',
+  };
+
+  const nodeVersion = process.version; // e.g. 'v20.14.0'
+
+  const platform = platformMap[process.platform];
+  const arch = archMap[process.arch];
+
+  if (!platform || !arch) {
+    throw new Error(`Unsupported platform or arch: ${process.platform} ${process.arch}`);
+  }
+
+  return {
+    platform,
+    arch,
+    node: `node${nodeVersion}`,
+    ext: platform === 'windows' ? '.exe' : '',
+  };
+}
 
 const defineEnv = Object.entries(process.env).reduce((acc, [key, val]) => {
   acc[`process.env.${key}`] = JSON.stringify(val);
@@ -16,24 +46,7 @@ const defineEnv = Object.entries(process.env).reduce((acc, [key, val]) => {
 
 const CMD_NAME = 'opsctrl';
 const DIST_DIR = 'release_dist';
-const BUNDLE_PATH = 'dist/opsctrl.cjs';
-const VERSION = require('./package.json').version;
-
-const targets = [{ platform: 'macos', arch: 'arm64', node: 'node20.14.0', ext: '' }];
-
-async function bundle() {
-  await build({
-    entryPoints: ['src/index.ts'],
-    outfile: BUNDLE_PATH,
-    bundle: true,
-    platform: 'node',
-    target: 'node18',
-    format: 'cjs',
-    external: ['fsevents'],
-    define: defineEnv,
-  });
-  console.log('✅ Bundled CLI to', BUNDLE_PATH);
-}
+const OUTFILE = 'dist/opsctrl.cjs';
 
 async function zipBinary(binaryPath: string, outputZip: string) {
   return new Promise<void>((resolve, reject) => {
@@ -47,30 +60,45 @@ async function zipBinary(binaryPath: string, outputZip: string) {
   });
 }
 
-async function buildBinaries() {
+async function main() {
+  const target = detectTarget();
+
+  const nexeTarget = `${target.platform}-${target.arch}-${target.node}`;
+  const binaryName = `${CMD_NAME}-${target.platform}-${target.arch}${target.ext}`;
+  const binaryPath = join(DIST_DIR, binaryName);
+  const zipPath = join(DIST_DIR, `${CMD_NAME}-${target.platform}-${target.arch}.zip`);
+
   await rm(DIST_DIR, { recursive: true, force: true });
   await mkdir(DIST_DIR, { recursive: true });
 
-  for (const target of targets) {
-    const binaryName = `${CMD_NAME}-${target.platform}-${target.arch}${target.ext}`;
-    const zipPath = join(DIST_DIR, `${CMD_NAME}-${target.platform}-${target.arch}.zip`);
+  await rm('dist', { recursive: true, force: true });
+  await mkdir('dist', { recursive: true });
 
-    const nexeTarget = `${target.platform}-${target.arch}-${target.node}`;
-    const binaryPath = `release_dist/opsctrl-${target.platform}-${target.arch}${target.ext}`;
+  console.log(`📦 Bundling with esbuild...`);
+  await build({
+    entryPoints: ['src/index.ts'],
+    outfile: OUTFILE,
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    target: 'node18',
+    external: ['fsevents'],
+    define: defineEnv,
+  });
 
-    console.log(`🔧 Building binary: ${binaryName}`);
-    await $`npx nexe dist/opsctrl.cjs \
-    --target ${nexeTarget} \
-    --build \
-    --output ${binaryPath}`;
-    console.log(`📦 Zipping to ${zipPath}`);
-    await zipBinary(binaryPath, zipPath);
+  console.log(`🔧 Compiling ${nexeTarget}...`);
+  try {
+    await $`npx nexe ${OUTFILE} --target ${nexeTarget} --build --output ${binaryPath}`;
+  } catch (err) {
+    console.error(`❌ Failed to compile for ${nexeTarget}`);
+    throw err;
   }
+
+  console.log(`📦 Zipping ${binaryName}...`);
+  await zipBinary(binaryPath, zipPath);
+  await rm(binaryPath);
+
+  console.log(`✅ Done. Zipped binary in ${DIST_DIR}`);
 }
 
-(async () => {
-  console.log(`🚀 Releasing OpsCtrl v${VERSION}`);
-  await bundle();
-  await buildBinaries();
-  console.log(`\n✅ All done! Binaries and zip files are in ${DIST_DIR}`);
-})();
+main();

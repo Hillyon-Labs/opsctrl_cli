@@ -22,14 +22,17 @@ jobs:
             node-version: '20.14.0'
             target: linux-x64-20.14.0
             output: opsctrl-linux-x64
+            tag_suffix: linux-x64
           - os: macos-latest
             node-version: '20.14.0'
             target: macos-arm64-20.14.0
             output: opsctrl-macos-arm64
+            tag_suffix: macos-arm64
           - os: windows-latest
             node-version: '20.14.0'
             target: windows-x64-20.14.0
             output: opsctrl-windows-x64.exe
+            tag_suffix: windows-x64.exe
 
     steps:
       - name: 📦 Checkout Code
@@ -72,78 +75,32 @@ jobs:
       - name: 📥 Install Dependencies
         run: npm ci
 
-      - name: ⚡ Bundle CLI with esbuild (Unix)
-        if: runner.os != 'Windows'
+      - name: ⚡ Build native CLI for host OS
+        run: npm run release
+        working-directory: ./opsctrl_cli
         env:
           OPSCTRL_API_URL: ${{ vars.OPSCTRL_API_URL }}
-        run: |
-          mkdir -p dist
-          npx esbuild src/index.ts \
-            --bundle \
-            --platform=node \
-            --format=cjs \
-            --target=node${{ matrix.node-version }} \
-            --outfile=dist/opsctrl.cjs \
-            --define:process.env.NODE_ENV='"production"' \
-            --define:process.env.OPSCTRL_API_URL='"${OPSCTRL_API_URL}"'
-      - name: ⚡ Bundle CLI with esbuild (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          OPSCTRL_API_URL: ${{ vars.OPSCTRL_API_URL }}
-        run: |
-          New-Item -ItemType Directory -Path dist -Force
-          $apiUrl = $env:OPSCTRL_API_URL
-          npx esbuild src/index.ts `
-            --bundle `
-            --platform=node `
-            --format=cjs `
-            --target=node20.14.0 `
-            --outfile=dist/opsctrl.cjs `
-            --define:process.env.NODE_ENV='"production"' `
-            --define:process.env.OPSCTRL_API_URL='"$apiUrl"'
 
-      - name: 🛠️ Build & Zip Binary (Unix)
+      - name: 📄 Generate SHA256 Checksum (Non-Windows)
         if: runner.os != 'Windows'
-        shell: bash
         run: |
-          mkdir -p release_dist
-          BIN_NAME="${{ matrix.output }}"
-          ZIP_NAME="${BIN_NAME%.*}.zip"
+          sha256sum release_dist/*.zip > release_dist/SHA256SUMS.txt
 
-          npx nexe dist/opsctrl.cjs \
-            --target ${{ matrix.target }} \
-            --output release_dist/$BIN_NAME \
-            --build
-
-          cd release_dist
-          zip -r $ZIP_NAME $BIN_NAME
-          rm $BIN_NAME
-          cd ..
-
-      - name: 🛠️ Build & Zip Binary (Windows)
+      - name: 📄 Generate SHA256 Checksum (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        env:
-          NEXE_CACHE_DIR: $env:USERPROFILE\.cache\nexe
         run: |
-          New-Item -ItemType Directory -Path release_dist -Force
-          $BIN_NAME = "${{ matrix.output }}"
-          $ZIP_NAME = "$($BIN_NAME -replace '\.exe$', '').zip"
-
-          npx nexe dist/opsctrl.cjs `
-            --target ${{ matrix.target }} `
-            --output "release_dist\$BIN_NAME" `
-            --build
-
-          Compress-Archive -Path "release_dist\$BIN_NAME" -DestinationPath "release_dist\$ZIP_NAME"
-          Remove-Item "release_dist\$BIN_NAME"
+          Get-FileHash -Algorithm SHA256 release_dist\*.zip | ForEach-Object {
+            "$($_.Hash) *$($_.Path | Split-Path -Leaf)"
+          } | Out-File -Encoding ASCII release_dist\SHA256SUMS.txt
 
       - name: 🧳 Upload Zipped Binary Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.output }}.zip
-          path: release_dist/${{ matrix.output }}.zip
+          name: opsctrl-${{ matrix.tag_suffix }}.zip
+          path: |
+            release_dist/opsctrl-${{ matrix.tag_suffix }}.zip
+            release_dist/SHA256SUMS.txt
           retention-days: 7
 
   release:

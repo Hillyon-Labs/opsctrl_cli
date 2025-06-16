@@ -75,7 +75,7 @@ jobs:
       - name: ⚡ Bundle CLI with esbuild (Unix)
         if: runner.os != 'Windows'
         env:
-          OPSCTRL_API_URL: ${{ secrets.OPSCTRL_API_URL }}
+          OPSCTRL_API_URL: ${{ vars.OPSCTRL_API_URL }}
         run: |
           mkdir -p dist
           npx esbuild src/index.ts \
@@ -86,22 +86,22 @@ jobs:
             --outfile=dist/opsctrl.cjs \
             --define:process.env.NODE_ENV='"production"' \
             --define:process.env.OPSCTRL_API_URL='"${OPSCTRL_API_URL}"'
-
       - name: ⚡ Bundle CLI with esbuild (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         env:
-          OPSCTRL_API_URL: ${{ secrets.OPSCTRL_API_URL }}
+          OPSCTRL_API_URL: ${{ vars.OPSCTRL_API_URL }}
         run: |
           New-Item -ItemType Directory -Path dist -Force
+          $apiUrl = $env:OPSCTRL_API_URL
           npx esbuild src/index.ts `
             --bundle `
             --platform=node `
             --format=cjs `
-            --target=node${{ matrix.node-version }} `
+            --target=node20.14.0 `
             --outfile=dist/opsctrl.cjs `
             --define:process.env.NODE_ENV='"production"' `
-            --define:process.env.OPSCTRL_API_URL='"${env:OPSCTRL_API_URL}"'
+            --define:process.env.OPSCTRL_API_URL='"$apiUrl"'
 
       - name: 🛠️ Build & Zip Binary (Unix)
         if: runner.os != 'Windows'

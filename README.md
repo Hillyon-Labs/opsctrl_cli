@@ -27,16 +27,16 @@ Opsctrl is an open-source command-line tool that helps DevOps and platform engin
 ## 🧪 Current Status
 
 ✔️ `opsctrl login` — working
-⚙️ `opsctrl diagnose` — launching soon
+⚙️ `opsctrl diagnose` — working 
 🚧 `opsctrl fix` — coming in v0.2
-🧠 GPT-based suggestions — partially integrated
+🧠 GPT-based suggestions — fully integrated
 📡 Slack support — planned
 
 ---
 
 ## ⚡ Quick Start
 
-### Option 1: NPM (for Node.js users)
+### Option 1: NPM (recommended for windows users)
 
 ```bash
 npm install -g opsctrl
@@ -50,13 +50,6 @@ curl -sSL https://opsctrl.dev/install.sh | bash
 
 This will install the latest binary for your system from the GitHub Releases.
 
-### Option 3: Homebrew (macOS/Linux)
-
-```bash
-brew install opsctrl/tap/opsctrl
-```
-
----
 
 ## 🚀 Commands
 
@@ -90,7 +83,7 @@ Preview or apply suggested fixes.
 
 * [x] CLI install & login
 * [x] Pod log/event parser
-* [ ] GPT-powered diagnosis
+* [x] GPT-powered diagnosis
 * [ ] Slack integration
 * [ ] Web dashboard (read-only)
 

@@ -12,7 +12,6 @@ dotenv.config();
 // Map Node.js `process.platform` and `process.arch` to nexe-compatible labels
 function detectTarget() {
   const platformMap: Record<string, string> = {
-    win32: 'windows',
     darwin: 'macos',
     linux: 'linux',
   };
@@ -35,13 +34,10 @@ function detectTarget() {
     platform,
     arch,
     node: `node${nodeVersion}`,
-    ext: platform === 'windows' ? '.exe' : '',
   };
 }
 
 const defineEnv = Object.entries(process.env).reduce((acc, [key, val]) => {
-  // Skip env vars with invalid JS identifier characters so they don't break the build in windows
-  if (!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)) return acc;
   acc[`process.env.${key}`] = JSON.stringify(val);
   return acc;
 }, {} as Record<string, string>);
@@ -66,7 +62,7 @@ async function main() {
   const target = detectTarget();
 
   const nexeTarget = `${target.platform}-${target.arch}-${target.node}`;
-  const binaryName = `${CMD_NAME}-${target.platform}-${target.arch}${target.ext}`;
+  const binaryName = `${CMD_NAME}-${target.platform}-${target.arch}`;
   const binaryPath = join(DIST_DIR, binaryName);
   const zipPath = join(DIST_DIR, `${CMD_NAME}-${target.platform}-${target.arch}.zip`);
 

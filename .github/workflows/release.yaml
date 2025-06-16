@@ -86,26 +86,12 @@ jobs:
         env:
           OPSCTRL_API_URL: ${{ vars.OPSCTRL_API_URL }}
 
-      - name: 📄 Generate SHA256 Checksum (Non-Windows)
-        if: runner.os != 'Windows'
-        run: |
-          sha256sum release_dist/*.zip > release_dist/SHA256SUMS.txt
-
-      - name: 📄 Generate SHA256 Checksum (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Get-FileHash -Algorithm SHA256 release_dist\*.zip | ForEach-Object {
-            "$($_.Hash) *$($_.Path | Split-Path -Leaf)"
-          } | Out-File -Encoding ASCII release_dist\SHA256SUMS.txt
-
       - name: 🧳 Upload Zipped Binary Artifact
         uses: actions/upload-artifact@v4
         with:
           name: opsctrl-${{ matrix.tag_suffix }}.zip
           path: |
             release_dist/opsctrl-${{ matrix.tag_suffix }}.zip
-            release_dist/SHA256SUMS.txt
           retention-days: 7
 
   release:

@@ -76,7 +76,7 @@ jobs:
         run: npm ci
 
       - name: ⚡ Build native CLI for host OS
-        working-directory: ./opsctrl_cli
+        # working-directory: opsctrl_cli
         run: npm run release
         env:
           OPSCTRL_API_URL: ${{ vars.OPSCTRL_API_URL }}

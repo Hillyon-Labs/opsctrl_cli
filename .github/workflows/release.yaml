@@ -1,0 +1,156 @@
+name: Build & Package Opsctrl CLI
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag to attach this release to (must already exist)"
+        required: true
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            node-version: "20.14.0"
+            target: linux-x64-20.14.0
+            output: opsctrl-linux-x64
+          - os: macos-latest
+            node-version: "20.14.0"
+            target: macos-arm64-20.14.0
+            output: opsctrl-macos-arm64
+          - os: windows-latest
+            node-version: "20.14.0"
+            target: windows-x64-20.14.0
+            output: opsctrl-windows-x64.exe
+
+    steps:
+      - name: 📦 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Validate Tag Exists
+        run: |
+          if ! git rev-parse "refs/tags/${{ github.event.inputs.tag }}" >/dev/null 2>&1; then
+            echo "❌ Tag ${{ github.event.inputs.tag }} does not exist!"
+            exit 1
+          fi
+
+      - name: 🧰 Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: 💾 Cache Nexe
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/nexe
+          key: nexe-${{ matrix.target }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: nexe-${{ matrix.target }}-
+
+      - name: 📥 Install Dependencies
+        run: npm ci
+
+      - name: ⚡ Bundle CLI with esbuild (Unix)
+        if: runner.os != 'Windows'
+        env:
+          OPSCTRL_API_URL: ${{ secrets.OPSCTRL_API_URL }}
+        run: |
+          mkdir -p dist
+          npx esbuild src/index.ts \
+            --bundle \
+            --platform=node \
+            --format=cjs \
+            --target=node${{ matrix.node-version }} \
+            --outfile=dist/opsctrl.cjs \
+            --define:process.env.NODE_ENV='"production"' \
+            --define:process.env.OPSCTRL_API_URL='"${OPSCTRL_API_URL}"'
+
+      - name: ⚡ Bundle CLI with esbuild (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          OPSCTRL_API_URL: ${{ secrets.OPSCTRL_API_URL }}
+        run: |
+          New-Item -ItemType Directory -Path dist -Force
+          npx esbuild src/index.ts `
+            --bundle `
+            --platform=node `
+            --format=cjs `
+            --target=node${{ matrix.node-version }} `
+            --outfile=dist/opsctrl.cjs `
+            --define:process.env.NODE_ENV='"production"' `
+            --define:process.env.OPSCTRL_API_URL='"${env:OPSCTRL_API_URL}"'
+
+      - name: 🛠️ Build & Zip Binary (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir -p release_dist
+          BIN_NAME="${{ matrix.output }}"
+          ZIP_NAME="${BIN_NAME%.*}.zip"
+
+          npx nexe dist/opsctrl.cjs \
+            --target ${{ matrix.target }} \
+            --output release_dist/$BIN_NAME \
+            --build
+
+          cd release_dist
+          zip -r $ZIP_NAME $BIN_NAME
+          rm $BIN_NAME
+          cd ..
+
+      - name: 🛠️ Build & Zip Binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          NEXE_CACHE_DIR: $env:USERPROFILE\.cache\nexe
+        run: |
+          New-Item -ItemType Directory -Path release_dist -Force
+          $BIN_NAME = "${{ matrix.output }}"
+          $ZIP_NAME = "$($BIN_NAME -replace '\.exe$', '').zip"
+
+          npx nexe dist/opsctrl.cjs `
+            --target ${{ matrix.target }} `
+            --output "release_dist\$BIN_NAME" `
+            --build
+
+          Compress-Archive -Path "release_dist\$BIN_NAME" -DestinationPath "release_dist\$ZIP_NAME"
+          Remove-Item "release_dist\$BIN_NAME"
+
+      - name: 🧳 Upload Zipped Binary Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.output }}.zip
+          path: release_dist/${{ matrix.output }}.zip
+          retention-days: 7
+
+  release:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Download All Zipped Binaries
+        uses: actions/download-artifact@v3
+        with:
+          path: release_dist
+
+      - name: 🚀 Create GitHub Release
+        id: gh_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          name: Release ${{ github.event.inputs.tag }}
+          prerelease: true
+
+      - name: 📦 Upload Zipped Release Artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release_dist/**/*.zip

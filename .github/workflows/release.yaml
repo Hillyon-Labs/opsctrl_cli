@@ -6,10 +6,6 @@ on:
       tag:
         description: 'Git tag to attach this release to (must already exist)'
         required: true
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
 
 jobs:
   build:
@@ -28,11 +24,11 @@ jobs:
             target: macos-arm64-20.14.0
             output: opsctrl-macos-arm64
             tag_suffix: macos-arm64
-          - os: windows-latest
+          - os: macos-latest
             node-version: '20.14.0'
-            target: windows-x64-20.14.0
-            output: opsctrl-windows-x64.exe
-            tag_suffix: windows-x64.exe
+            target: macos-x64-20.14.0
+            output: opsctrl-macos-x64
+            tag_suffix: macos-x64
 
     steps:
       - name: 📦 Checkout Code
@@ -89,9 +85,8 @@ jobs:
       - name: 🧳 Upload Zipped Binary Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: opsctrl-${{ matrix.tag_suffix }}.zip
-          path: |
-            release_dist/opsctrl-${{ matrix.tag_suffix }}.zip
+          name: opsctrl-${{ matrix.tag_suffix }}
+          path: release_dist/opsctrl-${{ matrix.tag_suffix }}.zip
           retention-days: 7
 
   release:

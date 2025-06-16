@@ -2,142 +2,121 @@
   <img src="assets/logo.png" alt="OpsCtrl Logo" width="250" />
 </p>
 
-> 💥 Diagnose broken Kubernetes pods in seconds – from your terminal.
+> Diagnose Kubernetes pod failures in seconds—directly from your terminal.
 
 # Opsctrl CLI
 
-Opsctrl is an open-source command-line tool that helps DevOps and platform engineers diagnose Kubernetes pod issues quickly and intelligently using logs, events, and LLM-powered suggestions.
+Opsctrl CLI is an open-source command-line interface for DevOps and platform engineers. It enables rapid, intelligent diagnosis of Kubernetes pod issues by analyzing logs, events, and AI-powered insights.
 
-> This CLI is part of the **Opsctrl** platform. While the CLI is open source, the full SaaS backend offers incident memory, audit trails, Slack integrations, and team dashboards.
+**Note:** This CLI is part of the broader **Opsctrl** platform. While the CLI itself is open source, the full SaaS offering provides incident history, audit trails, Slack integrations, and team dashboards.
 
-⭐ If this looks useful, [star the repo](https://github.com/Hillyon-Labs/opsctrl_cli) to follow development and support the project!
-
----
-
-## ✨ Features
-
-* Diagnose pod issues via logs and events
-* Receive GPT-powered suggestions and explanations
-* Automatically log incidents to the backend
-* CLI-authenticated using `opsctrl login`
-* Works with your existing Kube context
+If you find this tool valuable, please consider [starring the repository](https://github.com/Hillyon-Labs/opsctrl_cli) to support ongoing development.
 
 ---
 
-## 🧪 Current Status
+## Features
 
-✔️ `opsctrl login` — working
-⚙️ `opsctrl diagnose` — launching soon
-🚧 `opsctrl fix` — coming in v0.2
-🧠 GPT-based suggestions — partially integrated
-📡 Slack support — planned
+- Diagnose pod issues using logs and event data
+- Receive AI-powered suggestions and explanations
+- Automatically record incidents in the Opsctrl backend
+- Authenticate via `opsctrl login` (device code flow)
+- Integrates seamlessly with existing Kubernetes contexts
 
 ---
 
-## ⚡ Quick Start
+## Current Status
 
-### Option 1: NPM (for Node.js users)
+- `opsctrl login` — fully functional
+- `opsctrl diagnose` — fully functional
+- AI-powered diagnostics — integrated
+- `opsctrl fix` — coming in v0.2
+- Slack integration — planned
+
+---
+
+## Quick Start
+
+### Install via npm (Windows users recommended)
 
 ```bash
 npm install -g opsctrl
 ```
 
-### Option 2: GitHub Release (recommended)
+### Install via GitHub Releases
 
 ```bash
 curl -sSL https://opsctrl.dev/install.sh | bash
 ```
 
-This will install the latest binary for your system from the GitHub Releases.
-
-### Option 3: Homebrew (macOS/Linux)
-
-```bash
-brew install opsctrl/tap/opsctrl
-```
+The script will download and install the latest binary for your platform.
 
 ---
 
-## 🚀 Commands
+## Commands
 
 ### `opsctrl login`
 
-Authenticate with your Opsctrl Cloud account. Uses a device code flow (like Azure CLI or GitHub CLI).
+Initiate authentication with the Opsctrl Cloud service. Implements a device code flow similar to Azure CLI or GitHub CLI.
 
-### `opsctrl diagnose <pod>`
+### `opsctrl diagnose <pod-name> --namespace <namespace>`
 
-Diagnose a pod in a specific namespace. Gathers logs and events, sends to backend for analysis.
+Collect logs and event data for the specified pod and submit them for AI-powered analysis.
 
 ```bash
 opsctrl diagnose nginx-crash --namespace dev
 ```
 
-### `opsctrl fix <pod>` *(coming soon)*
+### `opsctrl fix <pod-name>` _(planned for v0.2)_
 
-Preview or apply suggested fixes.
-
----
-
-## 🔐 Authentication
-
-* Tokens are stored securely in `~/.opsctrl/credentials.json`
-* Tokens are JWTs issued by Opsctrl backend
-* Automatically included in all CLI requests
+Preview or apply automated remediation suggestions.
 
 ---
 
-## 🛣 Roadmap
+## Authentication
 
-* [x] CLI install & login
-* [x] Pod log/event parser
-* [ ] GPT-powered diagnosis
-* [ ] Slack integration
-* [ ] Web dashboard (read-only)
-
-Want to contribute to any of these? [Open an issue](https://github.com/Hillyon-Labs/opsctrl_cli/issues) or drop a PR 🙌
+- Credentials are stored securely in `~/.opsctrl/credentials.json`
+- Tokens are JWTs issued by the Opsctrl backend
+- All CLI commands automatically include the authentication token
 
 ---
 
-## ✨ Contributing
+## Roadmap
 
-This CLI is open to community contributions under a non-commercial license. Please open issues, submit PRs, or request features.
+- [x] CLI installation and login
+- [x] Log and event collection
+- [x] AI-powered diagnostics
+- [ ] Automated remediation (`opsctrl fix`)
+- [ ] Slack notifications
+- [ ] Web-based team dashboard
 
----
-
-## ℹ About
-
-Opsctrl CLI is maintained by the Opsctrl team. The tool is designed to be open, secure, and composable for real-world DevOps workflows.
-
-For access to the Opsctrl Cloud features (team memory, dashboards, Slack), visit [https://opsctrl.dev](https://opsctrl.dev).
-
----
-
-## ✉ Contact
-
-Email: [hello@opsctrl.dev](mailto:hello@opsctrl.dev)
-Twitter: [@opsctrl](https://twitter.com/opsctrl)
-Website: [https://opsctrl.dev](https://opsctrl.dev)
+Contributions are welcome. To participate, please [open an issue](https://github.com/Hillyon-Labs/opsctrl_cli/issues) or submit a pull request.
 
 ---
 
-## © License
+## Contributing
 
-See [LICENSE](./LICENSE) for details.
-
----
-
-# LICENSE
-
-Copyright (c) 2025 Opsctrl
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to use, copy, modify, and merge the Software for **non-commercial purposes only**, subject to the following conditions:
-
-1. The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-2. The Software shall not be used, copied, modified, or distributed for commercial purposes, including but not limited to incorporation into proprietary systems, SaaS offerings, or for providing paid services, without explicit written permission from the copyright holders.
-3. Redistribution of modified or unmodified versions of the Software must retain this license.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+This project is open to community contributions under a non-commercial license. Feel free to report issues, propose features, or contribute code.
 
 ---
 
-If you would like to request a commercial license, please contact: [licensing@opsctrl.dev](mailto:licensing@opsctrl.dev)
+## About
+
+Opsctrl CLI is maintained by Hillyon Labs. Designed to be secure, extensible, and composable for real-world DevOps workflows.
+
+For access to the complete Opsctrl Cloud platform, including incident history, audit trails, Slack integration, and team dashboards, visit [https://opsctrl.dev](https://opsctrl.dev).
+
+---
+
+## Contact
+
+- Email: [hello@opsctrl.dev](mailto:hello@opsctrl.dev)
+- Twitter: [@opsctrl](https://twitter.com/opsctrl)
+- Website: [https://opsctrl.dev](https://opsctrl.dev)
+
+---
+
+## License
+
+This software is licensed under the terms described in [LICENSE](./LICENSE).
+
+© 2025 Hillyon Labs

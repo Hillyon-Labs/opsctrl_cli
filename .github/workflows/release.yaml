@@ -101,12 +101,13 @@ jobs:
           path: release_dist
 
       - name: 🚀 Create GitHub Release
-        id: gh_release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.inputs.tag }}
           name: Release ${{ github.event.inputs.tag }}
           prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 📦 Upload Zipped Release Artifacts
         uses: softprops/action-gh-release@v1

@@ -1,4 +1,3 @@
-// scripts/build-cli.ts
 import { build } from 'esbuild';
 import dotenv from 'dotenv';
 import { mkdir, rm } from 'fs/promises';
@@ -9,7 +8,7 @@ import { createWriteStream } from 'fs';
 
 dotenv.config();
 
-// Map Node.js `process.platform` and `process.arch` to nexe-compatible labels
+// Fallback detection based on host
 function detectTarget() {
   const platformMap: Record<string, string> = {
     darwin: 'macos',
@@ -22,7 +21,6 @@ function detectTarget() {
   };
 
   const nodeVersion = process.version; // e.g. 'v20.14.0'
-
   const platform = platformMap[process.platform];
   const arch = archMap[process.arch];
 
@@ -35,6 +33,14 @@ function detectTarget() {
     arch,
     node: `node${nodeVersion}`,
   };
+}
+
+// Parse provided TARGET (e.g. macos-x64-node20.14.0)
+function parseTarget(str?: string) {
+  if (!str) return detectTarget();
+  const [platform, arch, node] = str.split('-');
+  if (!platform || !arch || !node) throw new Error(`Invalid TARGET format: ${str}`);
+  return { platform, arch, node };
 }
 
 const defineEnv = Object.entries(process.env).reduce((acc, [key, val]) => {
@@ -59,12 +65,12 @@ async function zipBinary(binaryPath: string, outputZip: string) {
 }
 
 async function main() {
-  const target = detectTarget();
-
+  const target = parseTarget(process.env.TARGET);
+  const tagSuffix = process.env.TAG_SUFFIX || `${target.platform}-${target.arch}`;
   const nexeTarget = `${target.platform}-${target.arch}-${target.node}`;
-  const binaryName = `${CMD_NAME}-${target.platform}-${target.arch}`;
+  const binaryName = `${CMD_NAME}-${tagSuffix}`;
   const binaryPath = join(DIST_DIR, binaryName);
-  const zipPath = join(DIST_DIR, `${CMD_NAME}-${target.platform}-${target.arch}.zip`);
+  const zipPath = join(DIST_DIR, `${binaryName}.zip`);
 
   await rm(DIST_DIR, { recursive: true, force: true });
   await mkdir(DIST_DIR, { recursive: true });
@@ -92,7 +98,7 @@ async function main() {
     throw err;
   }
 
-  console.log(`📦 Zipping ${binaryName}...`);
+  console.log(`📦 Zipping ${binaryName}.zip...`);
   await zipBinary(binaryPath, zipPath);
   await rm(binaryPath);
 

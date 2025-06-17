@@ -6,7 +6,8 @@ on:
       tag:
         description: 'Git tag to attach this release to (must already exist)'
         required: true
-
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -77,8 +78,8 @@ jobs:
 
       - name: ⚡ Build native CLI for host OS
         run: |
-          npm install
-          npm run release
+          npm run clean
+          TARGET=${{ matrix.target }} TAG_SUFFIX=${{ matrix.tag_suffix }} npm run release
         env:
           OPSCTRL_API_URL: ${{ vars.OPSCTRL_API_URL }}
 
@@ -90,6 +91,11 @@ jobs:
           retention-days: 7
 
   release:
+    environment:
+      name: production
+      url: https://github.com/${{ github.repository }}/releases/tag/${{ github.event.inputs.tag }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
     needs: build
     runs-on: ubuntu-latest

@@ -7,7 +7,7 @@ import { parseContainerState, printErrorAndExit } from '../utils/utils';
 import path from 'path';
 import fs from 'fs';
 import chalk from 'chalk';
-import perfomance from 'perf_hooks';
+import rules from '../common/rules/rules.json';
 
 import {
   LocalDiagnosisResult,
@@ -288,12 +288,8 @@ function matchLine(line: string, matcher: MatchLine): boolean {
   }
 }
 
-export function loadAllRules(): Rule[] {
-  const rulesPath = path.join(__dirname, '../common/rules/rules.json');
-  const data = fs.readFileSync(rulesPath, 'utf-8');
-  const rules = JSON.parse(data);
-
-  rules.forEach((rule: Rule, i: number) => {
+export function loadAllRules() {
+  rules.forEach((rule: any, i: number) => {
     if (!rule.id || !rule.diagnosis || typeof rule.diagnosis.diagnosis_summary !== 'string') {
       console.warn(`Invalid rule format at index ${i}`);
     }

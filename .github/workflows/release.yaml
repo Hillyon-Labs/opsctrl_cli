@@ -100,16 +100,12 @@ jobs:
         with:
           path: release_dist
 
-      - name: 🚀 Create GitHub Release
-        uses: softprops/action-gh-release@v1
+      - name: 🚀 Create GitHub Release and Upload Artifacts
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag }}
           name: Release ${{ github.event.inputs.tag }}
           prerelease: true
+          files: release_dist/**/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 📦 Upload Zipped Release Artifacts
-        uses: softprops/action-gh-release@v1
-        with:
-          files: release_dist/**/*.zip

@@ -86,8 +86,11 @@ async function main() {
     platform: 'node',
     format: 'cjs',
     target: 'node18',
-    external: ['fsevents'],
+    external: ['fsevents', 'open'],
     define: defineEnv,
+    loader: {
+      '.json': 'copy',
+    },
   });
 
   console.log(`🔧 Compiling ${nexeTarget}...`);

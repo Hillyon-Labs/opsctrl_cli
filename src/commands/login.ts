@@ -1,11 +1,10 @@
 import { Command } from 'commander';
 import ora from 'ora';
 import chalk from 'chalk';
-import open from 'open';
 import { isLoggedIn, login } from '../core/auth';
 import axios from 'axios';
 import { DEFAULT_API_URL } from '../core/config';
-import { printErrorAndExit } from '../utils/utils';
+import { openBrowser, printErrorAndExit } from '../utils/utils';
 
 export function registerLoginCommand(program: Command) {
   program
@@ -32,7 +31,7 @@ export function registerLoginCommand(program: Command) {
         if (options.browser !== false) {
           try {
             console.log('Opening browser...');
-            await open(url);
+            openBrowser(url);
             console.log(`${chalk.green('✓')} Browser opened successfully`);
           } catch (openError) {
             console.log(`${chalk.yellow('⚠')} Could not open browser automatically`);

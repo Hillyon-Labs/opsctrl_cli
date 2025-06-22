@@ -1,6 +1,6 @@
+import { exec } from 'child_process';
 import { ContainerStatusSummary } from '../common/interface/containerStatus';
 import { SanitizedPodDiagnostics } from '../common/interface/sanitizedPodDiagnostics';
-import { OpsctrlConfig } from '../core/config';
 import { V1ContainerStatus } from '@kubernetes/client-node';
 
 import chalk from 'chalk';
@@ -104,4 +104,16 @@ export function verboseLogDiagnosis(diagnosis: SanitizedPodDiagnostics) {
 export function printErrorAndExit(message: string, exitCode = 1): never {
   console.error(`\n ${chalk.red('❌ Error:')} ${message}`);
   process.exit(exitCode);
+}
+
+/**
+ *
+ * Opens the provided URL in the default web browser accroos all platforms.
+ * Uses `open` command on macOS, `start` on Windows, and `xdg-open` on Linux.
+ * @param url - The URL to open
+ */
+export function openBrowser(url: string) {
+  const cmd =
+    process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+  exec(`${cmd} "${url}"`);
 }

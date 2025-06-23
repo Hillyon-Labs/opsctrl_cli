@@ -26,6 +26,12 @@ jobs:
             output: opsctrl-macos-arm64
             tag_suffix: macos-arm64
 
+          - os: macos-13 # macos-13 runs on Intel, macos-latest runs on M1
+            node-version: '20.14.0'
+            target: macos-x64-20.14.0
+            output: opsctrl-macos-x64
+            tag_suffix: macos-x64
+
     steps:
       - name: 📦 Checkout Code
         uses: actions/checkout@v4
